@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/Yaron/PycharmProjects/set-game && npm create vite@latest . -- --template react-ts 2>&1)",
+      "Bash(cd /c/Users/Yaron/PycharmProjects/set-game && npm install 2>&1)",
+      "Bash(cd /c/Users/Yaron/PycharmProjects/set-game && rm -rf src/assets public/vite.svg public/icons.svg src/App.css)",
+      "Bash(cd /c/Users/Yaron/PycharmProjects/set-game && npm run build 2>&1)",
+      "Bash(gh auth status 2>&1)"
+    ]
+  }
+}
