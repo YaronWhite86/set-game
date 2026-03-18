@@ -44,3 +44,8 @@
 .hud__button--quit:hover {
   background: #fde8e6;
 }
+
+.hud__room-code {
+  font-weight: bold;
+  color: #9b59b6;
+}

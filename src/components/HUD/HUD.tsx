@@ -4,10 +4,13 @@ import './HUD.css';
 
 interface HUDProps {
   onQuit: () => void;
+  roomCode?: string;
 }
 
-export function HUD({ onQuit }: HUDProps) {
+export function HUD({ onQuit, roomCode }: HUDProps) {
   const { state, dispatch } = useGame();
+
+  const isOnline = state.gameMode === 'online';
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -24,6 +27,9 @@ export function HUD({ onQuit }: HUDProps) {
         <span className="hud__stat">Sets: {state.setsFound}</span>
         {state.timerEnabled && (
           <span className="hud__stat">{formatTime(state.elapsedSeconds)}</span>
+        )}
+        {roomCode && (
+          <span className="hud__stat hud__room-code">Room: {roomCode}</span>
         )}
       </div>
       <div className="hud__right">
@@ -46,7 +52,7 @@ export function HUD({ onQuit }: HUDProps) {
           </>
         )}
         <button className="hud__button hud__button--quit" onClick={onQuit}>
-          Quit
+          {isOnline ? 'Leave' : 'Quit'}
         </button>
       </div>
     </div>

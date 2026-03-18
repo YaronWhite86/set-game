@@ -1,5 +1,5 @@
 export function Diamond() {
   return (
-    <path d="M25 5 L45 25 L25 45 L5 25 Z" />
+    <path d="M20 2 L38 30 L20 58 L2 30 Z" />
   );
 }

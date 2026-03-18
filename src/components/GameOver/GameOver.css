@@ -73,3 +73,9 @@
 .gameover__button--primary:hover {
   background: #2980b9;
 }
+
+.gameover__waiting {
+  color: #999;
+  font-size: 0.95rem;
+  margin: 0;
+}

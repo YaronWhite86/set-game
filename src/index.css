@@ -19,3 +19,43 @@ body {
   flex-direction: column;
   min-height: 100vh;
 }
+
+.disconnect-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.disconnect-overlay__content {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 360px;
+}
+
+.disconnect-overlay__content h2 {
+  margin: 0 0 12px;
+  color: #e74c3c;
+}
+
+.disconnect-overlay__content p {
+  color: #555;
+  margin: 0 0 24px;
+}
+
+.disconnect-overlay__button {
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.disconnect-overlay__button:hover {
+  background: #2980b9;
+}

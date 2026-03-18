@@ -3,9 +3,19 @@ import { Card } from '../Card/Card';
 import './Board.css';
 
 export function Board() {
-  const { state, dispatch } = useGame();
+  const { state, dispatch, localPlayerId } = useGame();
 
-  const isDisabled = state.gameMode === 'multiplayer' && !state.claim.active;
+  const isMultiplayer = state.gameMode === 'multiplayer' || state.gameMode === 'online';
+  const isOnline = state.gameMode === 'online';
+
+  // In multiplayer/online: cards disabled when no active claim
+  // In online: cards also disabled if the claim isn't by the local player
+  let isDisabled = false;
+  if (isMultiplayer && !state.claim.active) {
+    isDisabled = true;
+  } else if (isOnline && state.claim.active && state.claim.playerId !== localPlayerId) {
+    isDisabled = true;
+  }
 
   return (
     <div className="board">

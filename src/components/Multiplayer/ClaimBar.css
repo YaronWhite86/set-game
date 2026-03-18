@@ -74,3 +74,33 @@
   color: #999;
   font-size: 0.85rem;
 }
+
+.claimbar__player--disconnected {
+  opacity: 0.5;
+}
+
+.claimbar__online-claim {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.claimbar__claim-button {
+  padding: 10px 40px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.claimbar__claim-button:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.claimbar__claim-button:active {
+  transform: translateY(0);
+}

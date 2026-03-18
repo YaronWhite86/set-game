@@ -20,14 +20,15 @@ const initialState: GameState = {
   elapsedSeconds: 0,
 };
 
-function createPlayers(count: number): GameState['players'] {
-  const keys = ['Q', 'P', 'Z', 'M'];
-  const names = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+function createPlayers(count: number, names?: string[]): GameState['players'] {
+  const keys = ['Q', 'P', 'Z', 'M', '', ''];
+  const defaultNames = ['Player 1', 'Player 2', 'Player 3', 'Player 4', 'Player 5', 'Player 6'];
   return Array.from({ length: count }, (_, i) => ({
     id: i,
-    name: names[i],
+    name: names?.[i] ?? defaultNames[i],
     score: 0,
-    claimKey: keys[i],
+    claimKey: names ? '' : (keys[i] ?? ''),
+    connected: true,
   }));
 }
 
@@ -42,21 +43,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'START_GAME': {
       const shuffled = shuffle(generateDeck());
       const { board, remaining } = dealCards(shuffled);
+      const playerCount = action.playerCount ?? (action.playerNames?.length ?? 2);
       return {
         ...initialState,
         deck: remaining,
         board,
         gameMode: action.mode,
         timerEnabled: action.timerEnabled,
-        players: action.mode === 'multiplayer'
-          ? createPlayers(action.playerCount ?? 2)
+        players: action.mode !== 'single'
+          ? createPlayers(playerCount, action.playerNames)
           : [],
       };
     }
 
     case 'SELECT_CARD': {
       if (state.selected.includes(action.cardId)) return state;
-      if (state.gameMode === 'multiplayer' && !state.claim.active) return state;
+      if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && !state.claim.active) return state;
 
       const newSelected = [...state.selected, action.cardId];
       if (newSelected.length < 3) {
@@ -79,7 +81,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
         const isGameOver = checkGameOver(finalBoard, finalDeck);
 
-        if (state.gameMode === 'multiplayer' && state.claim.playerId !== null) {
+        if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && state.claim.playerId !== null) {
           const updatedPlayers = state.players.map((p) =>
             p.id === state.claim.playerId ? { ...p, score: p.score + 1 } : p
           );
@@ -108,7 +110,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       // Invalid set in multiplayer — penalize
-      if (state.gameMode === 'multiplayer' && state.claim.playerId !== null) {
+      if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && state.claim.playerId !== null) {
         const updatedPlayers = state.players.map((p) =>
           p.id === state.claim.playerId ? { ...p, score: Math.max(0, p.score - 1) } : p
         );

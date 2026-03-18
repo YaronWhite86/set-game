@@ -11,14 +11,15 @@ export interface Card {
   shading: Shading;
 }
 
-export type GameMode = 'single' | 'multiplayer';
-export type Screen = 'menu' | 'game' | 'gameover';
+export type GameMode = 'single' | 'multiplayer' | 'online';
+export type Screen = 'menu' | 'game' | 'gameover' | 'lobby';
 
 export interface Player {
   id: number;
   name: string;
   score: number;
   claimKey: string;
+  connected?: boolean;
 }
 
 export interface ClaimState {
@@ -42,7 +43,7 @@ export interface GameState {
 }
 
 export type GameAction =
-  | { type: 'START_GAME'; mode: GameMode; timerEnabled: boolean; playerCount?: number }
+  | { type: 'START_GAME'; mode: GameMode; timerEnabled: boolean; playerCount?: number; playerNames?: string[] }
   | { type: 'SELECT_CARD'; cardId: number }
   | { type: 'DESELECT_CARD'; cardId: number }
   | { type: 'CLAIM'; playerId: number }

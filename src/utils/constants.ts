@@ -17,8 +17,13 @@ export const CLAIM_KEYS: Record<string, number> = {
   m: 3,
 };
 
+export const MAX_ONLINE_PLAYERS = 6;
+export const PLAYER_NAME_KEY = 'setgame-player-name';
+export const ROOM_CODE_LENGTH = 4;
+export const PEER_ID_PREFIX = 'setgame-';
+
 export const COLOR_VALUES: Record<Color, string> = {
-  red: '#e74c3c',
-  green: '#27ae60',
-  purple: '#8e44ad',
+  red: '#d40000',
+  green: '#008040',
+  purple: '#5b2e91',
 };

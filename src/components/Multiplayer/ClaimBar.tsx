@@ -2,13 +2,22 @@ import { useGame } from '../../hooks/useGame';
 import './ClaimBar.css';
 
 export function ClaimBar() {
-  const { state } = useGame();
+  const { state, dispatch, localPlayerId } = useGame();
 
-  if (state.gameMode !== 'multiplayer') return null;
+  const isMultiplayer = state.gameMode === 'multiplayer' || state.gameMode === 'online';
+  const isOnline = state.gameMode === 'online';
+
+  if (!isMultiplayer) return null;
 
   const claimingPlayer = state.claim.active
     ? state.players.find((p) => p.id === state.claim.playerId)
     : null;
+
+  const handleOnlineClaim = () => {
+    if (localPlayerId != null && !state.claim.active) {
+      dispatch({ type: 'CLAIM', playerId: localPlayerId });
+    }
+  };
 
   return (
     <div className="claimbar">
@@ -18,10 +27,15 @@ export function ClaimBar() {
             key={player.id}
             className={`claimbar__player ${
               claimingPlayer?.id === player.id ? 'claimbar__player--active' : ''
-            }`}
+            } ${player.connected === false ? 'claimbar__player--disconnected' : ''}`}
           >
-            <span className="claimbar__key">{player.claimKey}</span>
-            <span className="claimbar__name">{player.name}</span>
+            {!isOnline && (
+              <span className="claimbar__key">{player.claimKey}</span>
+            )}
+            <span className="claimbar__name">
+              {player.name}
+              {isOnline && player.id === localPlayerId && ' (You)'}
+            </span>
             <span className="claimbar__score">{player.score}</span>
           </div>
         ))}
@@ -34,10 +48,21 @@ export function ClaimBar() {
         </div>
       )}
 
-      {!state.claim.active && (
+      {!state.claim.active && !isOnline && (
         <p className="claimbar__prompt">
           Press your claim key to start selecting cards
         </p>
+      )}
+
+      {!state.claim.active && isOnline && (
+        <div className="claimbar__online-claim">
+          <button
+            className="claimbar__claim-button"
+            onClick={handleOnlineClaim}
+          >
+            CLAIM
+          </button>
+        </div>
       )}
     </div>
   );

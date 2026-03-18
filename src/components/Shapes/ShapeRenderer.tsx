@@ -23,7 +23,7 @@ export function ShapeRenderer({ shape, color, shading, index }: ShapeRendererPro
   const patternId = `stripe-${color}-${index}`;
 
   let fill: string;
-  const strokeWidth = 2.5;
+  const strokeWidth = 2;
 
   switch (shading) {
     case 'solid':
@@ -38,17 +38,16 @@ export function ShapeRenderer({ shape, color, shading, index }: ShapeRendererPro
   }
 
   return (
-    <svg viewBox="0 0 50 50" width="50" height="50" className="shape-svg">
+    <svg viewBox="0 0 40 60" width="40" height="60" className="shape-svg">
       {shading === 'striped' && (
         <defs>
           <pattern
             id={patternId}
             patternUnits="userSpaceOnUse"
-            width="6"
-            height="6"
-            patternTransform="rotate(45)"
+            width="40"
+            height="5"
           >
-            <line x1="0" y1="0" x2="0" y2="6" stroke={colorValue} strokeWidth="2" />
+            <line x1="0" y1="0" x2="40" y2="0" stroke={colorValue} strokeWidth="2" />
           </pattern>
         </defs>
       )}
