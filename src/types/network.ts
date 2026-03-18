@@ -1,5 +1,13 @@
 import type { Card, ClaimState, GameMode, Player } from './game';
 
+/** foundSet as seen by peers — no pendingDeck (anti-cheat) */
+export interface PeerFoundSet {
+  cards: Card[];
+  pendingBoard: Card[];
+  pendingGameOver: boolean;
+  playerId: number | null;
+}
+
 /** GameState as seen by peers — no deck (anti-cheat), includes deckSize */
 export interface PeerGameState {
   board: Card[];
@@ -13,6 +21,7 @@ export interface PeerGameState {
   timerEnabled: boolean;
   elapsedSeconds: number;
   deckSize: number;
+  foundSet: PeerFoundSet | null;
 }
 
 export interface LobbyPlayer {

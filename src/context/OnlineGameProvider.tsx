@@ -4,6 +4,7 @@ import { useGameState } from '../hooks/useGameState';
 import { useMultiplayer } from '../hooks/useMultiplayer';
 import type { useOnlineMultiplayer } from '../hooks/useOnlineMultiplayer';
 import type { GameAction } from '../types/game';
+import { FOUND_SET_DISPLAY_MS } from '../utils/constants';
 
 type OnlineMultiplayer = ReturnType<typeof useOnlineMultiplayer>;
 
@@ -38,6 +39,15 @@ export function OnlineHostProvider({ children, online }: OnlineHostProviderProps
 
   // Use multiplayer hook for claim countdown (reuses existing timer logic)
   useMultiplayer(state, dispatch);
+
+  // Auto-dismiss found set after display duration
+  useEffect(() => {
+    if (!state.foundSet) return;
+    const timer = setTimeout(() => {
+      dispatch({ type: 'DISMISS_FOUND_SET' });
+    }, FOUND_SET_DISPLAY_MS);
+    return () => clearTimeout(timer);
+  }, [state.foundSet, dispatch]);
 
   // Broadcast state to peers whenever it changes
   useEffect(() => {
@@ -98,6 +108,7 @@ export function OnlinePeerProvider({ children, online }: OnlinePeerProviderProps
     hintCardId: null,
     timerEnabled: false,
     elapsedSeconds: 0,
+    foundSet: null,
   };
 
   return (

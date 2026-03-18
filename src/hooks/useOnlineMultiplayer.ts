@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { GameState } from '../types/game';
 import type {
   PeerGameState,
+  PeerFoundSet,
   RoomState,
   LobbyPlayer,
   ConnectionStatus,
@@ -9,6 +10,16 @@ import type {
 import { PeerManager } from '../network/PeerManager';
 import { generateRoomCode } from '../network/roomCode';
 import { MAX_ONLINE_PLAYERS, PLAYER_NAME_KEY } from '../utils/constants';
+
+function foundSetToPeer(foundSet: GameState['foundSet']): PeerFoundSet | null {
+  if (!foundSet) return null;
+  return {
+    cards: foundSet.cards,
+    pendingBoard: foundSet.pendingBoard,
+    pendingGameOver: foundSet.pendingGameOver,
+    playerId: foundSet.playerId,
+  };
+}
 
 function stateToPeerState(state: GameState): PeerGameState {
   return {
@@ -23,6 +34,7 @@ function stateToPeerState(state: GameState): PeerGameState {
     timerEnabled: state.timerEnabled,
     elapsedSeconds: state.elapsedSeconds,
     deckSize: state.deck.length,
+    foundSet: foundSetToPeer(state.foundSet),
   };
 }
 
@@ -39,6 +51,10 @@ function peerStateToGameState(peerState: PeerGameState): GameState {
     hintCardId: peerState.hintCardId,
     timerEnabled: peerState.timerEnabled,
     elapsedSeconds: peerState.elapsedSeconds,
+    foundSet: peerState.foundSet ? {
+      ...peerState.foundSet,
+      pendingDeck: [],
+    } : null,
   };
 }
 

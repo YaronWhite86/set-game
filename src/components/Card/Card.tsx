@@ -6,11 +6,12 @@ interface CardProps {
   card: CardType;
   selected: boolean;
   hinted: boolean;
+  matched: boolean;
   disabled: boolean;
   onClick: () => void;
 }
 
-export function Card({ card, selected, hinted, disabled, onClick }: CardProps) {
+export function Card({ card, selected, hinted, matched, disabled, onClick }: CardProps) {
   const shapes = Array.from({ length: card.number }, (_, i) => (
     <ShapeRenderer
       key={i}
@@ -22,6 +23,7 @@ export function Card({ card, selected, hinted, disabled, onClick }: CardProps) {
   ));
 
   let className = 'card';
+  if (matched) className += ' card--matched';
   if (selected) className += ' card--selected';
   if (hinted) className += ' card--hinted';
   if (disabled) className += ' card--disabled';

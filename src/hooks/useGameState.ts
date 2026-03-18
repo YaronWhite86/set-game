@@ -18,6 +18,7 @@ const initialState: GameState = {
   hintCardId: null,
   timerEnabled: false,
   elapsedSeconds: 0,
+  foundSet: null,
 };
 
 function createPlayers(count: number, names?: string[]): GameState['players'] {
@@ -57,6 +58,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'SELECT_CARD': {
+      if (state.foundSet) return state;
       if (state.selected.includes(action.cardId)) return state;
       if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && !state.claim.active) return state;
 
@@ -81,31 +83,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
         const isGameOver = checkGameOver(finalBoard, finalDeck);
 
-        if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && state.claim.playerId !== null) {
-          const updatedPlayers = state.players.map((p) =>
-            p.id === state.claim.playerId ? { ...p, score: p.score + 1 } : p
-          );
-          return {
-            ...state,
-            board: finalBoard,
-            deck: finalDeck,
-            selected: [],
-            setsFound: state.setsFound + 1,
-            players: updatedPlayers,
-            claim: { playerId: null, timeRemaining: 0, active: false },
-            gameOver: isGameOver,
-            hintCardId: null,
-          };
-        }
-
         return {
           ...state,
-          board: finalBoard,
-          deck: finalDeck,
           selected: [],
-          setsFound: state.setsFound + 1,
-          gameOver: isGameOver,
+          claim: { playerId: null, timeRemaining: 0, active: false },
           hintCardId: null,
+          foundSet: {
+            cards,
+            pendingBoard: finalBoard,
+            pendingDeck: finalDeck,
+            pendingGameOver: isGameOver,
+            playerId: state.claim.playerId,
+          },
         };
       }
 
@@ -135,7 +124,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'DISMISS_FOUND_SET': {
+      if (!state.foundSet) return state;
+      const { pendingBoard, pendingDeck, pendingGameOver, playerId } = state.foundSet;
+
+      let updatedPlayers = state.players;
+      if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && playerId !== null) {
+        updatedPlayers = state.players.map((p) =>
+          p.id === playerId ? { ...p, score: p.score + 1 } : p
+        );
+      }
+
+      return {
+        ...state,
+        board: pendingBoard,
+        deck: pendingDeck,
+        setsFound: state.setsFound + 1,
+        players: updatedPlayers,
+        gameOver: pendingGameOver,
+        foundSet: null,
+      };
+    }
+
     case 'CLAIM': {
+      if (state.foundSet) return state;
       if (state.claim.active) return state;
       return {
         ...state,

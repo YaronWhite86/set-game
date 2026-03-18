@@ -35,9 +35,25 @@
   50% { box-shadow: 0 0 0 6px rgba(243, 156, 18, 0.15); }
 }
 
+.card--matched {
+  border-color: #2ecc71;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.4);
+  transform: scale(1.03);
+  animation: matched-pulse 1s infinite;
+}
+
+@keyframes matched-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(46, 204, 113, 0.2); }
+}
+
 .card--disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.card--matched.card--disabled {
+  opacity: 1;
 }
 
 .card__shapes {

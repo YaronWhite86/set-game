@@ -1,8 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { GameContext } from './gameContextValue';
 import { useGameState } from '../hooks/useGameState';
 import { useTimer } from '../hooks/useTimer';
 import { useMultiplayer } from '../hooks/useMultiplayer';
+import { FOUND_SET_DISPLAY_MS } from '../utils/constants';
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useGameState();
@@ -18,6 +19,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   useMultiplayer(state, dispatch);
+
+  // Auto-dismiss found set after display duration
+  useEffect(() => {
+    if (!state.foundSet) return;
+    const timer = setTimeout(() => {
+      dispatch({ type: 'DISMISS_FOUND_SET' });
+    }, FOUND_SET_DISPLAY_MS);
+    return () => clearTimeout(timer);
+  }, [state.foundSet, dispatch]);
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>

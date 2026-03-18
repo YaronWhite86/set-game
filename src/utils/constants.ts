@@ -21,6 +21,7 @@ export const MAX_ONLINE_PLAYERS = 6;
 export const PLAYER_NAME_KEY = 'setgame-player-name';
 export const ROOM_CODE_LENGTH = 4;
 export const PEER_ID_PREFIX = 'setgame-';
+export const FOUND_SET_DISPLAY_MS = 1500;
 
 export const COLOR_VALUES: Record<Color, string> = {
   red: '#d40000',

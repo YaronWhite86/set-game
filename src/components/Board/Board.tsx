@@ -11,7 +11,9 @@ export function Board() {
   // In multiplayer/online: cards disabled when no active claim
   // In online: cards also disabled if the claim isn't by the local player
   let isDisabled = false;
-  if (isMultiplayer && !state.claim.active) {
+  if (state.foundSet) {
+    isDisabled = true;
+  } else if (isMultiplayer && !state.claim.active) {
     isDisabled = true;
   } else if (isOnline && state.claim.active && state.claim.playerId !== localPlayerId) {
     isDisabled = true;
@@ -25,6 +27,7 @@ export function Board() {
           card={card}
           selected={state.selected.includes(card.id)}
           hinted={state.hintCardId === card.id}
+          matched={state.foundSet?.cards.some(c => c.id === card.id) ?? false}
           disabled={isDisabled}
           onClick={() => {
             if (state.selected.includes(card.id)) {

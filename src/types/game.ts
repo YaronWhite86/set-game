@@ -28,6 +28,14 @@ export interface ClaimState {
   active: boolean;
 }
 
+export interface FoundSet {
+  cards: Card[];          // the 3 matched cards to display
+  pendingBoard: Card[];   // board after replacement + auto-expansion
+  pendingDeck: Card[];    // deck after replacement + auto-expansion
+  pendingGameOver: boolean;
+  playerId: number | null; // who found it (multiplayer)
+}
+
 export interface GameState {
   deck: Card[];
   board: Card[];
@@ -40,6 +48,7 @@ export interface GameState {
   hintCardId: number | null;
   timerEnabled: boolean;
   elapsedSeconds: number;
+  foundSet: FoundSet | null;
 }
 
 export type GameAction =
@@ -51,4 +60,5 @@ export type GameAction =
   | { type: 'ADD_CARDS' }
   | { type: 'TICK_TIMER' }
   | { type: 'HINT' }
+  | { type: 'DISMISS_FOUND_SET' }
   | { type: 'RESET' };
