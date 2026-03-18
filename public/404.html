@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting…</title>
+  <script>
+    // Redirect to the app root, preserving query parameters (e.g. ?room=XXXX)
+    var path = window.location.pathname;
+    var base = '/set-game/';
+    if (path.startsWith(base)) {
+      window.location.replace(base + window.location.search + window.location.hash);
+    }
+  </script>
+</head>
+<body></body>
+</html>
