@@ -49,4 +49,58 @@
 
 .shape-svg {
   flex-shrink: 0;
+  width: 40px;
+  height: 60px;
+}
+
+/* Phone breakpoint */
+@media (max-width: 600px) {
+  .card {
+    padding: 8px;
+    min-height: 70px;
+  }
+
+  .card__shapes {
+    gap: 4px;
+  }
+
+  .shape-svg {
+    width: 28px;
+    height: 42px;
+  }
+}
+
+/* Small phone breakpoint */
+@media (max-width: 380px) {
+  .card {
+    padding: 6px;
+    min-height: 56px;
+  }
+
+  .shape-svg {
+    width: 22px;
+    height: 33px;
+  }
+}
+
+/* Touch devices: disable sticky hover */
+@media (hover: none) {
+  .card:hover:not(.card--disabled) {
+    border-color: #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transform: none;
+  }
+
+  .card--selected:hover {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+    transform: translateY(-2px);
+  }
+}
+
+/* Tap feedback for touch devices */
+.card:active:not(.card--disabled):not(.card--selected) {
+  border-color: #999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }

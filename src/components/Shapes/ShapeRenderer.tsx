@@ -38,7 +38,7 @@ export function ShapeRenderer({ shape, color, shading, index }: ShapeRendererPro
   }
 
   return (
-    <svg viewBox="0 0 40 60" width="40" height="60" className="shape-svg">
+    <svg viewBox="0 0 40 60" className="shape-svg">
       {shading === 'striped' && (
         <defs>
           <pattern

@@ -104,3 +104,28 @@
 .claimbar__claim-button:active {
   transform: translateY(0);
 }
+
+@media (max-width: 600px) {
+  .claimbar {
+    padding: 10px 12px;
+  }
+
+  .claimbar__players {
+    gap: 8px;
+  }
+
+  .claimbar__player {
+    padding: 6px 10px;
+  }
+
+  .claimbar__key {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .claimbar__claim-button {
+    width: 100%;
+    max-width: 280px;
+  }
+}

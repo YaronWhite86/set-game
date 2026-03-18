@@ -49,3 +49,25 @@
   font-weight: bold;
   color: #9b59b6;
 }
+
+@media (max-width: 600px) {
+  .hud {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .hud__left,
+  .hud__right {
+    gap: 8px;
+  }
+
+  .hud__stat {
+    font-size: 0.85rem;
+  }
+
+  .hud__button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+}

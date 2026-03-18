@@ -6,3 +6,19 @@
   margin: 0 auto;
   padding: 16px;
 }
+
+@media (max-width: 600px) {
+  .board {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .board {
+    gap: 6px;
+    padding: 6px;
+  }
+}

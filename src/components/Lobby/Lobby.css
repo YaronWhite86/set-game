@@ -172,3 +172,20 @@
   font-size: 0.95rem;
   margin: 0;
 }
+
+@media (max-width: 600px) {
+  .lobby {
+    margin: 32px auto;
+    padding: 24px 20px;
+    max-width: none;
+  }
+
+  .lobby__code {
+    font-size: 2rem;
+    padding: 12px;
+  }
+
+  .lobby__button {
+    max-width: none;
+  }
+}

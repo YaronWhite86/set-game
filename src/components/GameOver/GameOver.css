@@ -79,3 +79,19 @@
   font-size: 0.95rem;
   margin: 0;
 }
+
+@media (max-width: 600px) {
+  .gameover {
+    margin: 40px auto;
+    padding: 24px 20px;
+    max-width: none;
+  }
+
+  .gameover__title {
+    font-size: 2rem;
+  }
+
+  .gameover__button {
+    max-width: none;
+  }
+}
