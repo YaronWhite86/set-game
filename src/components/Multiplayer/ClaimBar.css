@@ -71,8 +71,8 @@
 .claimbar__prompt {
   text-align: center;
   margin: 10px 0 0;
-  color: #999;
-  font-size: 0.85rem;
+  color: #777;
+  font-size: 0.9rem;
 }
 
 .claimbar__player--disconnected {

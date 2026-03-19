@@ -9,21 +9,23 @@ export function Board() {
   const isMultiplayer = state.gameMode === 'multiplayer' || state.gameMode === 'online';
   const isOnline = state.gameMode === 'online';
 
-  // In multiplayer/online: cards disabled when no active claim
-  // In online: cards also disabled if the claim isn't by the local player
-  let isDisabled = false;
-  if (state.foundSet) {
-    isDisabled = true;
-  } else if (isMultiplayer && !state.claim.active) {
-    isDisabled = true;
-  } else if (isOnline && state.claim.active && state.claim.playerId !== localPlayerId) {
-    isDisabled = true;
-  }
+  // Only visually disable cards during foundSet display
+  const isDisabled = !!state.foundSet;
+
+  // Block clicks silently (no visual change) when claim rules prevent selection
+  const isClickBlocked =
+    !!state.foundSet ||
+    (isMultiplayer && !state.claim.active) ||
+    (isOnline && state.claim.active && state.claim.playerId !== localPlayerId);
+
+  // Positive indicator: local player has an active claim
+  const isClaimActive = isMultiplayer && state.claim.active &&
+    (!isOnline || state.claim.playerId === localPlayerId);
 
   const colorValues = COLOR_PALETTES[state.settings.colorPalette];
 
   return (
-    <div className="board">
+    <div className={`board${isClaimActive ? ' board--claim-active' : ''}`}>
       {state.board.map((card) => (
         <Card
           key={card.id}
@@ -34,6 +36,7 @@ export function Board() {
           matched={state.foundSet?.cards.some(c => c.id === card.id) ?? false}
           disabled={isDisabled}
           onClick={() => {
+            if (isClickBlocked) return;
             if (state.selected.includes(card.id)) {
               dispatch({ type: 'DESELECT_CARD', cardId: card.id });
             } else {
