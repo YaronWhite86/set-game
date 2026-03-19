@@ -22,12 +22,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-dismiss found set after display duration
   useEffect(() => {
-    if (!state.foundSet) return;
+    if (!state.foundSet || state.paused) return;
     const timer = setTimeout(() => {
       dispatch({ type: 'DISMISS_FOUND_SET' });
     }, FOUND_SET_DISPLAY_MS);
     return () => clearTimeout(timer);
-  }, [state.foundSet, dispatch]);
+  }, [state.foundSet, state.paused, dispatch]);
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>

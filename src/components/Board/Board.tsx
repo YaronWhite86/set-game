@@ -15,6 +15,7 @@ export function Board() {
   // Block clicks silently (no visual change) when claim rules prevent selection
   const isClickBlocked =
     !!state.foundSet ||
+    state.paused ||
     (isMultiplayer && !state.claim.active) ||
     (isOnline && state.claim.active && state.claim.playerId !== localPlayerId);
 
@@ -25,7 +26,7 @@ export function Board() {
   const colorValues = COLOR_PALETTES[state.settings.colorPalette];
 
   return (
-    <div className={`board${isClaimActive ? ' board--claim-active' : ''}`}>
+    <div className={`board${isClaimActive ? ' board--claim-active' : ''}${state.paused ? ' board--paused' : ''}`}>
       {state.board.map((card) => (
         <Card
           key={card.id}

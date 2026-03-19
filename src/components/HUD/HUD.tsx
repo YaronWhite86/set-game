@@ -51,6 +51,11 @@ export function HUD({ onQuit, roomCode }: HUDProps) {
             )}
           </>
         )}
+        {state.gameMode === 'multiplayer' && (
+          <button className="hud__button" onClick={() => dispatch({ type: 'TOGGLE_PAUSE' })}>
+            {state.paused ? 'Resume' : 'Pause'}
+          </button>
+        )}
         <button className="hud__button hud__button--quit" onClick={onQuit}>
           {isOnline ? 'Leave' : 'Quit'}
         </button>

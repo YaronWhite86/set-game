@@ -109,6 +109,7 @@ export function OnlinePeerProvider({ children, online }: OnlinePeerProviderProps
     timerEnabled: false,
     elapsedSeconds: 0,
     foundSet: null,
+    paused: false,
     settings: DEFAULT_SETTINGS,
   };
 

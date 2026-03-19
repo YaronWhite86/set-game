@@ -11,6 +11,11 @@ export function useMultiplayer(
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (state.gameMode !== 'multiplayer' || state.gameOver) return;
+      if (e.key === 'Escape') {
+        dispatch({ type: 'TOGGLE_PAUSE' });
+        return;
+      }
+      if (state.paused) return;
       const key = e.key.toLowerCase();
       if (key in CLAIM_KEYS) {
         const playerId = CLAIM_KEYS[key];
@@ -19,7 +24,7 @@ export function useMultiplayer(
         }
       }
     },
-    [state.gameMode, state.gameOver, state.claim.active, state.players.length, dispatch]
+    [state.gameMode, state.gameOver, state.paused, state.claim.active, state.players.length, dispatch]
   );
 
   useEffect(() => {
@@ -29,7 +34,7 @@ export function useMultiplayer(
 
   // Claim countdown timer
   useEffect(() => {
-    if (state.claim.active && state.claim.timeRemaining > 0) {
+    if (state.claim.active && state.claim.timeRemaining > 0 && !state.paused) {
       timerRef.current = window.setInterval(() => {
         dispatch({ type: 'TICK_TIMER' });
       }, 1000);
@@ -43,5 +48,5 @@ export function useMultiplayer(
         timerRef.current = null;
       }
     };
-  }, [state.claim.active, state.claim.timeRemaining, dispatch]);
+  }, [state.claim.active, state.claim.timeRemaining, state.paused, dispatch]);
 }

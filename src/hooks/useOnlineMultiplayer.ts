@@ -49,6 +49,7 @@ function peerStateToGameState(peerState: PeerGameState): GameState {
     players: peerState.players,
     claim: peerState.claim,
     gameOver: peerState.gameOver,
+    paused: false,
     hintCardId: peerState.hintCardId,
     timerEnabled: peerState.timerEnabled,
     elapsedSeconds: peerState.elapsedSeconds,

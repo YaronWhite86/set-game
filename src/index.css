@@ -70,3 +70,52 @@ html {
     margin: 0 16px;
   }
 }
+
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.pause-overlay__content {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 360px;
+}
+
+.pause-overlay__content h2 {
+  margin: 0 0 12px;
+  color: #2c3e50;
+}
+
+.pause-overlay__content p {
+  color: #555;
+  margin: 0 0 24px;
+}
+
+.pause-overlay__button {
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pause-overlay__button:hover {
+  background: #2980b9;
+}
+
+@media (max-width: 600px) {
+  .pause-overlay__content {
+    padding: 24px 20px;
+    margin: 0 16px;
+  }
+}

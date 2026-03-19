@@ -52,6 +52,7 @@ export interface GameState {
   players: Player[];
   claim: ClaimState;
   gameOver: boolean;
+  paused: boolean;
   hintCardId: number | null;
   timerEnabled: boolean;
   elapsedSeconds: number;
@@ -69,4 +70,5 @@ export type GameAction =
   | { type: 'TICK_TIMER' }
   | { type: 'HINT' }
   | { type: 'DISMISS_FOUND_SET' }
+  | { type: 'TOGGLE_PAUSE' }
   | { type: 'RESET' };

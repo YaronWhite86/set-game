@@ -15,6 +15,7 @@ const initialState: GameState = {
   players: [],
   claim: { playerId: null, timeRemaining: 0, active: false },
   gameOver: false,
+  paused: false,
   hintCardId: null,
   timerEnabled: false,
   elapsedSeconds: 0,
@@ -60,7 +61,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'TOGGLE_PAUSE': {
+      if (state.gameMode !== 'multiplayer' || state.gameOver) return state;
+      return { ...state, paused: !state.paused };
+    }
+
     case 'SELECT_CARD': {
+      if (state.paused) return state;
       if (state.foundSet) return state;
       if (state.selected.includes(action.cardId)) return state;
       if ((state.gameMode === 'multiplayer' || state.gameMode === 'online') && !state.claim.active) return state;
@@ -120,6 +127,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'DESELECT_CARD': {
+      if (state.paused) return state;
       return {
         ...state,
         selected: state.selected.filter((id) => id !== action.cardId),
@@ -150,6 +158,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'CLAIM': {
+      if (state.paused) return state;
       if (state.foundSet) return state;
       if (state.claim.active) return state;
       return {
@@ -178,12 +187,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'ADD_CARDS': {
+      if (state.paused) return state;
       if (state.deck.length === 0) return state;
       const { board, remaining } = expandBoard(state.board, state.deck);
       return { ...state, board, deck: remaining };
     }
 
     case 'TICK_TIMER': {
+      if (state.paused) return state;
       if (state.claim.active && state.claim.timeRemaining > 0) {
         const newTime = state.claim.timeRemaining - 1;
         if (newTime <= 0) {

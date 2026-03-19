@@ -23,6 +23,13 @@
   }
 }
 
+.board--paused {
+  filter: blur(12px);
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.2s ease;
+}
+
 .board--claim-active {
   border-radius: 12px;
   animation: claim-glow 2s ease-in-out infinite;

@@ -37,6 +37,20 @@ function LocalGameScreen({ onMenu }: { onMenu: () => void }) {
       <HUD onQuit={onMenu} />
       <Board />
       <ClaimBar />
+      {state.paused && (
+        <div className="pause-overlay">
+          <div className="pause-overlay__content">
+            <h2>Game Paused</h2>
+            <p>Press Escape or click Resume to continue</p>
+            <button
+              className="pause-overlay__button"
+              onClick={() => dispatch({ type: 'TOGGLE_PAUSE' })}
+            >
+              Resume
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
