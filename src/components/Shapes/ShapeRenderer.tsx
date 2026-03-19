@@ -1,26 +1,30 @@
-import type { Shape, Color, Shading } from '../../types/game';
-import { COLOR_VALUES } from '../../utils/constants';
+import type { Shape, Shading } from '../../types/game';
 import { Diamond } from './Diamond';
-import { Squiggle } from './Squiggle';
 import { Oval } from './Oval';
+import { Star } from './Star';
+import { Heart } from './Heart';
+import { Cross } from './Cross';
+import { Arrow } from './Arrow';
 
 interface ShapeRendererProps {
   shape: Shape;
-  color: Color;
+  colorValue: string;
   shading: Shading;
   index: number;
 }
 
 const ShapeComponent: Record<Shape, React.FC> = {
   diamond: Diamond,
-  squiggle: Squiggle,
   oval: Oval,
+  star: Star,
+  heart: Heart,
+  cross: Cross,
+  arrow: Arrow,
 };
 
-export function ShapeRenderer({ shape, color, shading, index }: ShapeRendererProps) {
+export function ShapeRenderer({ shape, colorValue, shading, index }: ShapeRendererProps) {
   const Component = ShapeComponent[shape];
-  const colorValue = COLOR_VALUES[color];
-  const patternId = `stripe-${color}-${index}`;
+  const patternId = `stripe-${colorValue.replace('#', '')}-${index}`;
 
   let fill: string;
   const strokeWidth = 2;

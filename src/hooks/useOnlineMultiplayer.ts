@@ -9,7 +9,7 @@ import type {
 } from '../types/network';
 import { PeerManager } from '../network/PeerManager';
 import { generateRoomCode } from '../network/roomCode';
-import { MAX_ONLINE_PLAYERS, PLAYER_NAME_KEY } from '../utils/constants';
+import { MAX_ONLINE_PLAYERS, PLAYER_NAME_KEY, DEFAULT_SETTINGS } from '../utils/constants';
 
 function foundSetToPeer(foundSet: GameState['foundSet']): PeerFoundSet | null {
   if (!foundSet) return null;
@@ -35,6 +35,7 @@ function stateToPeerState(state: GameState): PeerGameState {
     elapsedSeconds: state.elapsedSeconds,
     deckSize: state.deck.length,
     foundSet: foundSetToPeer(state.foundSet),
+    settings: state.settings,
   };
 }
 
@@ -55,6 +56,7 @@ function peerStateToGameState(peerState: PeerGameState): GameState {
       ...peerState.foundSet,
       pendingDeck: [],
     } : null,
+    settings: peerState.settings ?? DEFAULT_SETTINGS,
   };
 }
 

@@ -1,4 +1,5 @@
 import { useGame } from '../../hooks/useGame';
+import { COLOR_PALETTES } from '../../utils/constants';
 import { Card } from '../Card/Card';
 import './Board.css';
 
@@ -19,12 +20,15 @@ export function Board() {
     isDisabled = true;
   }
 
+  const colorValues = COLOR_PALETTES[state.settings.colorPalette];
+
   return (
     <div className="board">
       {state.board.map((card) => (
         <Card
           key={card.id}
           card={card}
+          colorValues={colorValues}
           selected={state.selected.includes(card.id)}
           hinted={state.hintCardId === card.id}
           matched={state.foundSet?.cards.some(c => c.id === card.id) ?? false}

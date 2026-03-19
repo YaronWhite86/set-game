@@ -1,9 +1,10 @@
-import type { Card as CardType } from '../../types/game';
+import type { Card as CardType, Color } from '../../types/game';
 import { ShapeRenderer } from '../Shapes/ShapeRenderer';
 import './Card.css';
 
 interface CardProps {
   card: CardType;
+  colorValues: Record<Color, string>;
   selected: boolean;
   hinted: boolean;
   matched: boolean;
@@ -11,12 +12,12 @@ interface CardProps {
   onClick: () => void;
 }
 
-export function Card({ card, selected, hinted, matched, disabled, onClick }: CardProps) {
+export function Card({ card, colorValues, selected, hinted, matched, disabled, onClick }: CardProps) {
   const shapes = Array.from({ length: card.number }, (_, i) => (
     <ShapeRenderer
       key={i}
       shape={card.shape}
-      color={card.color}
+      colorValue={colorValues[card.color]}
       shading={card.shading}
       index={i}
     />

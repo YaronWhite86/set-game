@@ -4,7 +4,7 @@ import { generateDeck } from '../logic/deck';
 import { dealCards, replaceCards, expandBoard } from '../logic/dealing';
 import { isValidSet, findAllSets, hasSetOnBoard } from '../logic/setValidation';
 import { shuffle } from '../utils/shuffle';
-import { CLAIM_TIMEOUT_SECONDS } from '../utils/constants';
+import { CLAIM_TIMEOUT_SECONDS, DEFAULT_SETTINGS } from '../utils/constants';
 
 const initialState: GameState = {
   deck: [],
@@ -19,6 +19,7 @@ const initialState: GameState = {
   timerEnabled: false,
   elapsedSeconds: 0,
   foundSet: null,
+  settings: DEFAULT_SETTINGS,
 };
 
 function createPlayers(count: number, names?: string[]): GameState['players'] {
@@ -42,7 +43,8 @@ function checkGameOver(board: Card[], deck: Card[]): boolean {
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_GAME': {
-      const shuffled = shuffle(generateDeck());
+      const settings = action.settings ?? DEFAULT_SETTINGS;
+      const shuffled = shuffle(generateDeck(settings.shapes));
       const { board, remaining } = dealCards(shuffled);
       const playerCount = action.playerCount ?? (action.playerNames?.length ?? 2);
       return {
@@ -51,6 +53,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         board,
         gameMode: action.mode,
         timerEnabled: action.timerEnabled,
+        settings,
         players: action.mode !== 'single'
           ? createPlayers(playerCount, action.playerNames)
           : [],

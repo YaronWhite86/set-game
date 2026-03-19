@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Screen, GameMode } from './types/game';
+import type { Screen, GameMode, GameSettings } from './types/game';
 import { GameProvider } from './context/GameContext';
 import { OnlineHostProvider, OnlinePeerProvider } from './context/OnlineGameProvider';
 import { useGame } from './hooks/useGame';
@@ -24,6 +24,7 @@ function LocalGameScreen({ onMenu }: { onMenu: () => void }) {
             mode: state.gameMode,
             timerEnabled: state.timerEnabled,
             playerCount: state.players.length || undefined,
+            settings: state.settings,
           })
         }
         onMenu={onMenu}
@@ -76,6 +77,7 @@ function OnlineGameScreen({
                   mode: 'online',
                   timerEnabled: false,
                   playerNames: names,
+                  settings: state.settings,
                 });
               }
             : undefined
@@ -108,8 +110,8 @@ function MenuWithProvider({
   const { dispatch } = useGame();
 
   const handleStart = useCallback(
-    (mode: GameMode, timerEnabled: boolean, playerCount: number) => {
-      dispatch({ type: 'START_GAME', mode, timerEnabled, playerCount });
+    (mode: GameMode, timerEnabled: boolean, playerCount: number, settings: GameSettings) => {
+      dispatch({ type: 'START_GAME', mode, timerEnabled, playerCount, settings });
       setScreen('game');
     },
     [dispatch, setScreen]

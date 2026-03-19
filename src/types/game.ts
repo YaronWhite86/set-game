@@ -1,7 +1,14 @@
-export type Shape = 'diamond' | 'squiggle' | 'oval';
+export type Shape = 'diamond' | 'oval' | 'star' | 'heart' | 'cross' | 'arrow';
 export type Color = 'red' | 'green' | 'purple';
 export type NumberCount = 1 | 2 | 3;
 export type Shading = 'solid' | 'striped' | 'empty';
+
+export type ColorPalette = 'classic' | 'ocean' | 'sunset' | 'neon';
+
+export interface GameSettings {
+  shapes: Shape[];          // exactly 3
+  colorPalette: ColorPalette;
+}
 
 export interface Card {
   id: number;
@@ -49,10 +56,11 @@ export interface GameState {
   timerEnabled: boolean;
   elapsedSeconds: number;
   foundSet: FoundSet | null;
+  settings: GameSettings;
 }
 
 export type GameAction =
-  | { type: 'START_GAME'; mode: GameMode; timerEnabled: boolean; playerCount?: number; playerNames?: string[] }
+  | { type: 'START_GAME'; mode: GameMode; timerEnabled: boolean; playerCount?: number; playerNames?: string[]; settings?: GameSettings }
   | { type: 'SELECT_CARD'; cardId: number }
   | { type: 'DESELECT_CARD'; cardId: number }
   | { type: 'CLAIM'; playerId: number }

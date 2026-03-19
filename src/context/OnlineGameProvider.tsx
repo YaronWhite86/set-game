@@ -4,7 +4,7 @@ import { useGameState } from '../hooks/useGameState';
 import { useMultiplayer } from '../hooks/useMultiplayer';
 import type { useOnlineMultiplayer } from '../hooks/useOnlineMultiplayer';
 import type { GameAction } from '../types/game';
-import { FOUND_SET_DISPLAY_MS } from '../utils/constants';
+import { FOUND_SET_DISPLAY_MS, DEFAULT_SETTINGS } from '../utils/constants';
 
 type OnlineMultiplayer = ReturnType<typeof useOnlineMultiplayer>;
 
@@ -109,6 +109,7 @@ export function OnlinePeerProvider({ children, online }: OnlinePeerProviderProps
     timerEnabled: false,
     elapsedSeconds: 0,
     foundSet: null,
+    settings: DEFAULT_SETTINGS,
   };
 
   return (
