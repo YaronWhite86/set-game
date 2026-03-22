@@ -1,204 +1,288 @@
-# Implementation Plan: GitHub Pages P2P Hosting + Testing Suite
+# Implementation Plan: GitHub Pages P2P Multiplayer + Testing Suite
 
-## Part 1: GitHub Pages with P2P Multiplayer
+## Current State
 
-### Goal
-Host the Set game on GitHub Pages so anyone can create a P2P game room and share a link with players on any device/network.
+- **Working**: Single-player game, local multiplayer (keyboard claims Q/P/Z/M), full Set game logic
+- **Not implemented**: Online multiplayer, deployment, testing
+- **Stack**: React 19 + TypeScript 5.9 + Vite 8, no test framework, no CI/CD
 
-### Architecture Overview
+---
 
-```
-Player A (Host)                    Player B (Guest)
-  Browser  ──── WebRTC DataChannel ────  Browser
-     │                                      │
-     └──── PeerJS Cloud Signaling ──────────┘
-            (free, no server needed)
-```
+## Part 1: P2P Online Multiplayer via GitHub Pages
 
-**Key technology choice: PeerJS** — wraps WebRTC with a simple API and provides free signaling/STUN servers. No backend needed; perfect for GitHub Pages static hosting.
+### Problem
 
-### Step-by-step Implementation
+The current multiplayer mode requires all players on the same keyboard. We need any player on any device/network to join via a shareable link — hosted as a static site on GitHub Pages (no backend).
 
-#### Step 1: Configure Vite for GitHub Pages
-- Add `base` option to `vite.config.ts` (e.g., `base: '/set-game/'` or whatever the repo name is)
-- Add a `deploy` script to `package.json`: `"deploy": "npm run build && gh-pages -d dist"`
-- Install `gh-pages` as a dev dependency
-- Add GitHub Actions workflow (`.github/workflows/deploy.yml`) to auto-deploy on push to main
-
-#### Step 2: Install PeerJS
-- `npm install peerjs`
-- PeerJS provides: peer ID generation, signaling via PeerJS Cloud, WebRTC DataChannel abstraction
-
-#### Step 3: Create P2P networking layer (`src/network/`)
-New files:
-- **`src/network/peer.ts`** — PeerJS wrapper
-  - `createRoom()`: Creates a new Peer, returns a room ID (the peer ID)
-  - `joinRoom(roomId)`: Connects to an existing peer by ID
-  - `sendMessage(data)`: Send game actions over DataChannel
-  - `onMessage(callback)`: Receive game actions
-  - `disconnect()`: Clean up connections
-- **`src/network/protocol.ts`** — Message types
-  - `SyncState`: Full state snapshot (sent on join)
-  - `GameAction`: Forwarded reducer actions (SELECT_CARD, CLAIM, etc.)
-  - `PlayerJoined` / `PlayerLeft`: Connection events
-  - `Ping/Pong`: Latency tracking (optional)
-- **`src/network/hostGuest.ts`** — Host/guest role logic
-  - **Host**: Owns the authoritative game state, runs the reducer, broadcasts state changes
-  - **Guest**: Sends actions to host, receives state updates, renders received state
-  - This host-authoritative model prevents desync and cheating
-
-#### Step 4: Create room management UI
-- **New screen: `'lobby'`** added to the Screen type
-  - "Create Room" button → generates room ID → shows shareable URL
-  - "Join Room" input → paste/enter room ID or URL
-  - URL format: `https://<user>.github.io/set-game/#room=<peerId>`
-  - Use hash-based routing so GitHub Pages doesn't need server-side routing
-- **Lobby screen** shows connected players, their names, ready status
-  - Host sees a "Start Game" button when 2+ players connected
-  - Players can set their display name
-
-#### Step 5: Integrate P2P with game state
-- **`src/hooks/useNetworkGame.ts`** — New hook that bridges P2P and reducer
-  - On host: wraps `useGameState`, intercepts dispatch to broadcast actions
-  - On guest: receives state from host, provides read-only state + a `sendAction` function
-  - Replaces direct `useGameState` when in online mode
-- **Modify `GameContext.tsx`**: Support both local and networked game providers
-- **Claim system adaptation**: In P2P mode, claims are sent as network messages instead of local keyboard events. Each player presses a single "Claim" button (touch-friendly) rather than player-specific keys.
-
-#### Step 6: Mobile/touch support
-- Add a "Claim" button on screen (the keyboard Q/P/Z/M keys don't work on mobile)
-- Ensure card grid is responsive (CSS grid with `auto-fit`)
-- Touch events already work via React's `onClick`
-
-#### Step 7: Connection resilience
-- Handle peer disconnection gracefully (show "Reconnecting..." overlay)
-- If host disconnects, show "Host left" and return to menu
-- PeerJS auto-reconnect for brief network blips
-
-### Data Flow (P2P Game)
+### Solution: WebRTC via PeerJS
 
 ```
-1. Host creates room → PeerJS assigns peer ID → URL with #room=<id>
-2. Guest opens URL → PeerJS connects to host peer
-3. Host sends full GameState snapshot to guest
-4. During game:
-   - Guest taps "Claim" → sends CLAIM action to host
-   - Host reducer processes action → broadcasts new state to all guests
-   - Guest taps card → sends SELECT_CARD to host
-   - Host validates, updates state, broadcasts
-5. Game over: host sends final state, all see results
+┌─────────────┐                              ┌─────────────┐
+│  Host (A)   │◄──── WebRTC DataChannel ────►│  Guest (B)  │
+│  Runs game  │                              │  Sends acts  │
+│  reducer    │                              │  Renders     │
+└──────┬──────┘                              └──────┬──────┘
+       │                                            │
+       └────────► PeerJS Cloud Signaling ◄──────────┘
+                  (free STUN + signaling)
 ```
 
-### Dependencies to Add
-- `peerjs` (~50KB gzipped) — WebRTC abstraction + free signaling
-- `gh-pages` (dev) — GitHub Pages deployment
+**Why PeerJS**: Simple API over WebRTC, free cloud signaling/STUN servers, ~50KB gzipped, no backend needed. Works on GitHub Pages since it's purely client-side.
+
+**Why host-authoritative**: One player (host) runs the reducer and broadcasts state. Guests send actions and render received state. This prevents desync and makes the logic simple — no conflict resolution needed.
+
+### Implementation Steps
+
+#### 1.1 — GitHub Pages Deployment
+
+**Files to modify:**
+- `vite.config.ts` — Add `base: '/set-game/'` (match repo name)
+- `package.json` — Add `"deploy"` script
+
+**Files to create:**
+- `.github/workflows/deploy.yml` — GitHub Actions workflow:
+  ```yaml
+  on: push to main
+  steps: checkout → setup node → npm ci → npm run test:run → npm run build → deploy to gh-pages
+  ```
+
+**Result**: Game live at `https://YaronWhite86.github.io/set-game/`
+
+#### 1.2 — P2P Networking Layer
+
+**New file: `src/network/PeerManager.ts`**
+- Class wrapping PeerJS lifecycle
+- `createRoom()` → generates peer, returns room ID
+- `joinRoom(roomId: string)` → connects DataConnection to host
+- `broadcast(data)` → send to all connected peers (host only)
+- `send(data)` → send to host (guest only)
+- `onMessage(callback)` / `onPeerJoin(callback)` / `onPeerLeave(callback)`
+- `destroy()` → cleanup
+
+**New file: `src/network/protocol.ts`**
+- TypeScript types for all P2P messages:
+  ```ts
+  type NetworkMessage =
+    | { type: 'SYNC_STATE'; state: GameState }      // host → guest (full state)
+    | { type: 'GAME_ACTION'; action: GameAction }    // guest → host (player action)
+    | { type: 'PLAYER_JOIN'; player: PlayerInfo }    // bidirectional
+    | { type: 'PLAYER_LEAVE'; playerId: number }     // host → guests
+    | { type: 'LOBBY_UPDATE'; players: PlayerInfo[] } // host → guests
+    | { type: 'GAME_START' }                         // host → guests
+  ```
+
+**New file: `src/network/useNetworkGame.ts`** — React hook
+- **Host mode**: Wraps local `useReducer`, on every state change broadcasts `SYNC_STATE` to all guests. Listens for `GAME_ACTION` from guests and feeds into reducer.
+- **Guest mode**: Holds state in `useState`, replaces it on each `SYNC_STATE`. Provides `sendAction(action)` that sends `GAME_ACTION` to host.
+- Exports `{ state, dispatch, isHost, connectedPlayers, roomId }`
+
+#### 1.3 — New Game Mode & Menu Changes
+
+**Modify `src/types/game.ts`:**
+- Add `'online'` to `GameMode` type
+- Add `Screen` value: `'lobby'`
+- Add `PlayerInfo` type: `{ id: string; name: string; isHost: boolean; ready: boolean }`
+
+**Modify `src/components/Menu/Menu.tsx`:**
+- Add third option: "Online Multiplayer"
+- Online → navigates to lobby screen (not directly to game)
+
+#### 1.4 — Lobby Screen
+
+**New file: `src/components/Lobby/Lobby.tsx`**
+- **Host view**: Shows room ID, shareable URL, copy-to-clipboard button, list of connected players, "Start Game" button (enabled when 2+ players)
+- **Guest view**: Shows "Connecting..." then player list, "Ready" toggle
+- **URL format**: `https://YaronWhite86.github.io/set-game/#room=<peerId>`
+- Hash-based routing — `App.tsx` reads `window.location.hash` on mount to auto-join
+
+**New file: `src/components/Lobby/Lobby.css`**
+
+#### 1.5 — Integrate P2P with Game Flow
+
+**Modify `src/App.tsx`:**
+- Add `'lobby'` screen case
+- On mount: check `window.location.hash` for `#room=<id>` → auto-navigate to lobby as guest
+- Pass `isOnline` flag to `GameScreen`
+
+**Modify `src/context/GameContext.tsx`:**
+- Accept optional `networkGame` prop
+- When online: use `useNetworkGame` instead of `useGameState`
+- Dispatch function: in online guest mode, wraps `sendAction` to look like regular dispatch
+
+**Modify `src/components/Board/Board.tsx`:**
+- In online mode: each player gets a "Claim" button (replaces keyboard-based Q/P/Z/M)
+- Cards still use `onClick` (already touch-friendly)
+
+#### 1.6 — Online Claim System
+
+**Modify `src/hooks/useMultiplayer.ts`:**
+- In online mode: disable keyboard listener
+- Add `claimForSelf()` function that dispatches `CLAIM` with current player's ID
+- Guest calls `claimForSelf()` → sends `GAME_ACTION({ type: 'CLAIM', playerId })` to host
+- Host processes claim in reducer, broadcasts updated state
+
+**New UI element in `Board.tsx` or `ClaimBar.tsx`:**
+- Large "CLAIM!" button visible on mobile
+- Disabled during active claim by another player
+- Shows countdown when you've claimed
+
+#### 1.7 — Connection Resilience
+
+- **Guest disconnect**: Host removes player from lobby/game, broadcasts `PLAYER_LEAVE`
+- **Host disconnect**: Guests see "Host disconnected" overlay → return to menu
+- **Reconnect**: PeerJS handles ICE reconnection for brief blips; for full disconnect, guest must rejoin via URL
+- **Late join**: Not supported during active game (only in lobby)
+
+### New Dependencies
+| Package | Purpose | Size |
+|---------|---------|------|
+| `peerjs` | WebRTC abstraction + free signaling | ~50KB gz |
 
 ---
 
 ## Part 2: Testing Suite
 
-### Goal
-Add a comprehensive testing suite so new additions (especially P2P networking) don't break existing game logic.
+### Problem
 
-### Technology Choice: Vitest
-- Native Vite integration (uses same config, same transforms)
-- Jest-compatible API (describe/it/expect)
-- Fast, supports TypeScript out of the box
-- Add `@testing-library/react` + `jsdom` for component tests
+No tests exist. Adding P2P networking is a major change that could break existing game logic. Need a safety net.
 
-### Step-by-step Implementation
+### Solution: Vitest + React Testing Library
 
-#### Step 1: Install testing dependencies
+**Why Vitest**: Native Vite integration (same transforms/config), Jest-compatible API, fast, TypeScript support out of the box.
+
+### Implementation Steps
+
+#### 2.1 — Install & Configure
+
+**Install:**
 ```bash
-npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @testing-library/user-event
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
 ```
 
-#### Step 2: Configure Vitest
-- Add `test` config to `vite.config.ts`:
-  ```ts
+**Modify `vite.config.ts`:**
+```ts
+/// <reference types="vitest/config" />
+export default defineConfig({
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
-  }
-  ```
-- Create `src/test/setup.ts` with `@testing-library/jest-dom` matchers
-- Add `"test": "vitest"` and `"test:run": "vitest run"` scripts to `package.json`
-- Add `vitest/globals` to tsconfig types
+  },
+})
+```
 
-#### Step 3: Unit tests for pure game logic (highest priority)
+**Modify `package.json`** — add scripts:
+```json
+"test": "vitest",
+"test:run": "vitest run",
+"test:coverage": "vitest run --coverage"
+```
+
+**Create `src/test/setup.ts`:**
+```ts
+import '@testing-library/jest-dom/vitest'
+```
+
+**Modify `tsconfig.app.json`** — add `"vitest/globals"` to `compilerOptions.types`
+
+#### 2.2 — Pure Logic Tests (Priority 1)
+
+These are the highest-value, easiest-to-write tests. Pure functions, no React needed.
 
 **`src/logic/__tests__/deck.test.ts`**
-- Generates exactly 81 unique cards
-- Each card has valid property values (shape, color, number, shading)
-- Card IDs are 0-80 with no duplicates
+| Test | Assertion |
+|------|-----------|
+| generates 81 cards | `generateDeck().length === 81` |
+| all IDs unique | no duplicate IDs in 0-80 |
+| all property combos valid | every card has valid shape/color/number/shading |
+| covers all combinations | 3×3×3×3 = 81 unique property combos |
 
 **`src/logic/__tests__/setValidation.test.ts`**
-- `isValidSet`: returns true for valid sets (all-same and all-different combos)
-- `isValidSet`: returns false for invalid sets
-- `findAllSets`: finds correct count of sets for known board configurations
-- `findAllSets`: returns empty array when no sets exist
-- `hasSetOnBoard`: returns true/false correctly, consistent with `findAllSets`
+| Test | Assertion |
+|------|-----------|
+| valid set (all different) | 3 cards all-different on every property → true |
+| valid set (mixed same/diff) | e.g. same shape, different everything else → true |
+| invalid set (2 same 1 diff) | any property with 2 matching + 1 different → false |
+| findAllSets on known board | returns expected count |
+| findAllSets empty board | returns `[]` |
+| hasSetOnBoard consistent | agrees with `findAllSets(cards).length > 0` |
 
 **`src/logic/__tests__/dealing.test.ts`**
-- `dealCards`: returns 12 cards and reduces deck by 12
-- `replaceCards`: swaps matched cards correctly when deck has cards
-- `replaceCards`: shrinks board when deck is empty
-- `replaceCards`: shrinks board when board has >12 cards
-- `expandBoard`: adds 3 cards, reduces deck by 3
+| Test | Assertion |
+|------|-----------|
+| dealCards deals 12 | board.length === 12, deck shrinks by 12 |
+| replaceCards swaps in-place | board.length stays 12, matched cards gone |
+| replaceCards shrinks (empty deck) | board.length < 12 when deck empty |
+| replaceCards shrinks (>12 board) | removes cards without replacement |
+| expandBoard adds 3 | board grows by 3, deck shrinks by 3 |
 
 **`src/utils/__tests__/shuffle.test.ts`**
-- Returns array of same length
-- Contains same elements (no loss/duplication)
-- Does not mutate original array
+| Test | Assertion |
+|------|-----------|
+| preserves length | output.length === input.length |
+| preserves elements | sorted output === sorted input |
+| doesn't mutate input | original array unchanged |
 
-#### Step 4: Reducer tests
+#### 2.3 — Reducer Tests (Priority 2)
 
-**`src/hooks/__tests__/useGameState.test.ts`**
-- Test reducer function directly (import and call with state + action)
-- `START_GAME`: initializes with 12 board cards, 69 deck cards, correct player count
-- `SELECT_CARD` with valid set: removes cards, replaces from deck, increments setsFound
-- `SELECT_CARD` with invalid set: clears selection, penalizes in multiplayer
-- `SELECT_CARD` auto-expansion: board expands when no valid sets remain
-- `CLAIM`: sets active claim with correct player and timer
-- `CLAIM_TIMEOUT`: decrements player score (min 0), clears claim
-- `HINT`: sets hintCardId to a card that's part of a valid set
-- Game over detection: triggers when deck empty and no valid sets on board
+**`src/hooks/__tests__/gameReducer.test.ts`**
 
-#### Step 5: Component tests (lower priority, add incrementally)
+Import the reducer function directly and test state transitions:
+
+| Test | Action | Assertion |
+|------|--------|-----------|
+| START_GAME (single) | `START_GAME` | 12 board, 69 deck, 0 players |
+| START_GAME (multi) | `START_GAME` w/ 3 players | 3 players created, scores 0 |
+| valid set found | 3 `SELECT_CARD` (valid) | setsFound++, cards replaced |
+| invalid set (single) | 3 `SELECT_CARD` (invalid) | selection cleared |
+| invalid set (multi) | 3 `SELECT_CARD` (invalid) | player score -1 |
+| auto-expand | valid set leaves no sets | board expands |
+| game over | deck empty + no sets | `gameOver === true` |
+| CLAIM | `CLAIM` | claim active, timer 10 |
+| CLAIM_TIMEOUT | `CLAIM_TIMEOUT` | score -1, claim cleared |
+| HINT | `HINT` | hintCardId in valid set |
+| RESET | `RESET` | back to initial state |
+| score floor | timeout at score 0 | score stays 0 |
+
+#### 2.4 — Component Tests (Priority 3)
 
 **`src/components/__tests__/Card.test.tsx`**
-- Renders correct number of shapes
-- Applies selected/highlighted styles
-- Calls onClick when clicked
-- Disabled state works correctly
+- Renders correct number of SVG shapes (1, 2, or 3)
+- Shows selected state CSS class
+- Calls onClick handler
+- Disabled prop prevents clicks
 
 **`src/components/__tests__/Board.test.tsx`**
-- Renders correct number of cards
-- Cards are clickable/unclickable based on claim state
+- Renders 12 cards from state
+- Cards disabled when no active claim (multiplayer)
 
 **`src/components/__tests__/Menu.test.tsx`**
-- Mode selection works
-- Player count controls appear for multiplayer
-- Start button dispatches correct action
+- Renders mode selection buttons
+- Multiplayer shows player count selector
+- Start dispatches correct action
 
-#### Step 6: Integration tests for game flow
+#### 2.5 — Integration Tests (Priority 4)
 
 **`src/__tests__/gameFlow.test.ts`**
-- Full game simulation: start → select valid sets → game over
-- Multiplayer flow: claim → select → score update
-- Board never has 0 valid sets while deck has cards (invariant test)
+- Simulate full game: start → find valid sets on board → select them → repeat until game over
+- Verify invariant: board always has a valid set while deck has cards
+- Multiplayer flow: claim → select 3 → score updates
 
-#### Step 7: CI integration
-- Add test step to the GitHub Actions deploy workflow
-- Tests run before build: `npm run test:run && npm run build`
-- Fail deployment if tests fail
+#### 2.6 — CI Integration
 
-### Test file structure
+**`.github/workflows/deploy.yml`** (same file as deployment):
+```yaml
+- run: npm run test:run    # fail-fast if tests break
+- run: npm run build
+- deploy to GitHub Pages
+```
+
+### Test File Structure
 ```
 src/
 ├── test/
-│   └── setup.ts                          # Test setup (jest-dom matchers)
+│   └── setup.ts
 ├── logic/__tests__/
 │   ├── deck.test.ts
 │   ├── setValidation.test.ts
@@ -206,7 +290,7 @@ src/
 ├── utils/__tests__/
 │   └── shuffle.test.ts
 ├── hooks/__tests__/
-│   └── useGameState.test.ts
+│   └── gameReducer.test.ts
 ├── components/__tests__/
 │   ├── Card.test.tsx
 │   ├── Board.test.tsx
@@ -215,25 +299,28 @@ src/
     └── gameFlow.test.ts
 ```
 
-### Priority Order
-1. **Pure logic tests** (deck, setValidation, dealing, shuffle) — most value, easiest to write
-2. **Reducer tests** — validates all game state transitions
-3. **CI integration** — prevents regressions on deploy
-4. **Component tests** — add as features are built
-5. **Integration tests** — end-to-end game flow verification
-
 ---
 
-## Implementation Order (Both Parts Combined)
+## Combined Implementation Phases
 
-| Phase | Tasks | Why this order |
-|-------|-------|----------------|
-| **Phase 1** | Install Vitest, write pure logic tests | Establish safety net before any changes |
-| **Phase 2** | Write reducer tests | Ensure state management is locked down |
-| **Phase 3** | Configure GitHub Pages deployment | Get the current game live first |
-| **Phase 4** | Add PeerJS, build networking layer | Core P2P infrastructure |
-| **Phase 5** | Build lobby UI + room sharing | User-facing room creation/joining |
-| **Phase 6** | Integrate P2P with game state | Wire networking into existing game |
-| **Phase 7** | Mobile/touch adaptations | Make it work on all devices |
-| **Phase 8** | Add component + integration tests | Cover new P2P features |
-| **Phase 9** | CI pipeline (test → build → deploy) | Automated quality gate |
+| Phase | What | Depends On | Deliverable |
+|-------|------|------------|-------------|
+| **1** | Vitest setup + pure logic tests | Nothing | Safety net for game logic |
+| **2** | Reducer + component tests | Phase 1 | Full test coverage of existing code |
+| **3** | GitHub Pages deployment | Nothing | Game live at `*.github.io/set-game/` |
+| **4** | PeerJS networking layer | Phase 3 | `PeerManager`, protocol types, `useNetworkGame` |
+| **5** | Lobby UI + room sharing | Phase 4 | Create/join rooms via shareable URL |
+| **6** | Online game integration | Phase 4+5 | Full P2P gameplay with host-authoritative state |
+| **7** | Mobile claim button + responsive | Phase 6 | Touch-friendly multiplayer on any device |
+| **8** | Tests for P2P features | Phase 6+7 | Network mock tests, lobby tests |
+| **9** | CI pipeline | Phase 1+3 | Auto test → build → deploy on push |
+
+### Risk Mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| PeerJS cloud signaling goes down | Can self-host PeerServer (npm package) as fallback |
+| WebRTC blocked by strict firewalls | PeerJS uses TURN relay as fallback; document limitation |
+| State desync between host/guest | Host-authoritative model: guest state is always overwritten by host |
+| Large state snapshots slow | GameState is small (~5KB); no optimization needed |
+| Mobile browser WebRTC support | WebRTC supported on all modern mobile browsers (iOS 11+, Android 5+) |
